@@ -1,0 +1,13 @@
+# SwiftPM / build output
+.build/
+build/
+.swiftpm/
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcodeproj/
+*.xcworkspace/
+
+# macOS
+.DS_Store
