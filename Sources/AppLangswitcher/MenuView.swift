@@ -24,16 +24,13 @@ struct MenuView: View {
             Divider()
 
             HStack {
-                Toggle("Launch at login", isOn: Binding(
-                    get: { model.launchAtLogin },
-                    set: { model.launchAtLogin = $0 }
-                ))
+                Toggle("Launch at login", isOn: $model.launchAtLogin)
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }
             }
         }
         .padding(12)
-        .frame(width: 360)
+        .frame(width: 380)
     }
 }
 
@@ -58,12 +55,14 @@ private struct RuleRow: View {
                 }
             }
             .labelsHidden()
-            .frame(width: 150)
+            .fixedSize()
             Button { model.remove(rule) } label: {
                 Image(systemName: "xmark.circle.fill")
             }
             .buttonStyle(.borderless)
             .foregroundStyle(.secondary)
+            .help("Remove \(rule.appName)")
+            .accessibilityLabel("Remove \(rule.appName)")
         }
     }
 

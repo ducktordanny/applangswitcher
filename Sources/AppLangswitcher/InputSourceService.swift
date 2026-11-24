@@ -1,6 +1,7 @@
 import Carbon
+import OSLog
 
-struct InputSource: Identifiable, Hashable {
+struct InputSource: Identifiable {
     let id: String
     let name: String
 }
@@ -23,10 +24,15 @@ enum InputSourceService {
     }
 
     static func select(id: String) {
-        guard id != currentID(),
-              let source = sources(matching: [kTISPropertyInputSourceID as String: id]).first
-        else { return }
-        TISSelectInputSource(source)
+        guard id != currentID() else { return }
+        guard let source = sources(matching: [kTISPropertyInputSourceID as String: id]).first else {
+            Logger.app.notice("Input source \(id, privacy: .public) is not enabled")
+            return
+        }
+        let status = TISSelectInputSource(source)
+        if status != noErr {
+            Logger.app.error("Selecting \(id, privacy: .public) failed with OSStatus \(status)")
+        }
     }
 
     private static func sources(matching filter: [String: Any]) -> [TISInputSource] {

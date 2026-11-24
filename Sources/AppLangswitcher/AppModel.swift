@@ -1,34 +1,8 @@
 import AppKit
 import Carbon
+import OSLog
 import ServiceManagement
 import UniformTypeIdentifiers
-
-struct Rule: Codable, Identifiable, Hashable {
-    let bundleID: String
-    var appName: String
-    var sourceID: String
-    var id: String { bundleID }
-}
-
-struct AppInfo: Identifiable, Hashable {
-    let bundleID: String
-    let name: String
-    var id: String { bundleID }
-}
-
-extension AppInfo {
-    init?(_ app: NSRunningApplication) {
-        guard let bundleID = app.bundleIdentifier else { return nil }
-        self.init(bundleID: bundleID, name: app.localizedName ?? bundleID)
-    }
-
-    init?(url: URL) {
-        guard let bundleID = Bundle(url: url)?.bundleIdentifier else { return nil }
-        var name = FileManager.default.displayName(atPath: url.path)
-        if name.hasSuffix(".app") { name = String(name.dropLast(4)) }
-        self.init(bundleID: bundleID, name: name)
-    }
-}
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -59,7 +33,7 @@ final class AppModel: ObservableObject {
             do {
                 if newValue { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
             } catch {
-                NSLog("AppLangswitcher: launch at login toggle failed: \(error)")
+                Logger.app.error("Launch at login toggle failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -137,9 +111,12 @@ final class AppModel: ObservableObject {
     }
 
     private static func loadRules() -> [Rule] {
-        guard let data = UserDefaults.standard.data(forKey: rulesKey),
-              let rules = try? JSONDecoder().decode([Rule].self, from: data)
-        else { return [] }
-        return rules
+        guard let data = UserDefaults.standard.data(forKey: rulesKey) else { return [] }
+        do {
+            return try JSONDecoder().decode([Rule].self, from: data)
+        } catch {
+            Logger.app.error("Discarding unreadable saved rules: \(error.localizedDescription, privacy: .public)")
+            return []
+        }
     }
 }
